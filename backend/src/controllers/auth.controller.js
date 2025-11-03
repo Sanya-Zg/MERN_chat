@@ -21,11 +21,13 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email format!' });
     }
 
+    // Check if email already in use
     const user = await User.findOne({ email: email });
     if (user) {
-      return res.status(400).json({ message: 'Email already exists' });
+      return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    // Hashing password before saving to DB
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -35,19 +37,16 @@ export const signup = async (req, res) => {
       password: hashedPassword,
     });
 
-    if (newUser) {
-      const saveUser = await newUser.save();
-      generateToken(saveUser._id, res);
+      const savedUser = await newUser.save();
+      generateToken(savedUser._id, res);
 
       res.status(201).json({
-        _id: newUser._id,
-        fullName: newUser.fullName,
-        email: newUser.email,
-        profilePic: newUser.profilePic,
+        _id: savedUser._id,
+        fullName: savedUser.fullName,
+        email: savedUser.email,
+        profilePic: savedUser.profilePic,
       });
-    } else {
-      res.status(400).json({ message: 'Invalid user data' });
-    }
+   
   } catch (error) {
     console.log('Error in signup controller', error);
     res.status(500).json({ message: 'Internal server error'})
