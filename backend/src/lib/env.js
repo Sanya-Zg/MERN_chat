@@ -1,5 +1,14 @@
 import 'dotenv/config';
 
+const requiredEnvVars = ['JWT_SECRET', 'MONGO_URI', 'RESEND_API_KEY', 'CLIENT_URL', 'EMAIL_FROM'];
+
+for (const varName of requiredEnvVars) {
+  if (!process.env[varName]) {
+    throw new Error(`Missing required environment variable: ${varName}`);
+  }
+}
+
+
 export const ENV = {
   PORT: process.env.PORT,
   MONGO_URI: process.env.MONGO_URI,
