@@ -1,5 +1,5 @@
 import cloudinary from '../lib/cloudinary.js';
-import Message from '../models/Messege.js';
+import Message from '../models/Message.js';
 import User from '../models/User.js';
 
 export const getAllContacts = async (req, res) => {
@@ -41,10 +41,31 @@ export const sendMessage = async (req, res) => {
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
 
+    if (!text && !image) {
+      return res
+        .status(400)
+        .json({ error: 'Message must contain text or image' });
+    }
+
+    if (senderId.equals(receiverId)) {
+      return res
+        .status(400)
+        .json({ message: 'Cannot send messages to yourself.' });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(receiverId)) {
+      return res.status(400).json({ error: 'Invalid receiver ID' });
+    }
+
     let imageUrl;
     if (image) {
-      const uploadResponse = await cloudinary.uploader.upload(image);
-      imageUrl = uploadResponse.secure_url;
+      try {
+        const uploadResponse = await cloudinary.uploader.upload(image);
+        imageUrl = uploadResponse.secure_url;
+      } catch (uploadError) {
+        console.error('Cloudinary upload failed:', uploadError);
+        return res.status(500).json({ error: 'Failed to upload image' });
+      }
     }
 
     const newMessage = new Message({
